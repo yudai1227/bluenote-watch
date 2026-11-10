@@ -1,0 +1,60 @@
+name: Blue Note 空席ウォッチ
+
+on:
+  schedule:
+    # 5分おき。混雑する毎時0分を避けて 2,7,12,...,57 分に実行
+    - cron: "2-59/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      test_notify:
+        description: "通知のテスト送信だけを行う"
+        type: boolean
+        default: false
+
+env:
+  EVENT_ID: "3990"        # 公演ID(.../schedule/exec/<ID> の数字)
+  MATCH_ARGS: ""          # 絞り込む場合の例: --match 11.23 --match 1st
+
+permissions:
+  contents: write         # 前回の状態ファイルをリポジトリに保存するため
+
+concurrency:
+  group: bluenote-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: ライブラリを入れる
+        run: pip install --quiet requests beautifulsoup4
+
+      - name: 通知テスト
+        if: ${{ inputs.test_notify }}
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python bluenote_watch.py "$EVENT_ID" --test-notify
+
+      - name: 空席を確認
+        if: ${{ !inputs.test_notify }}
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python bluenote_watch.py "$EVENT_ID" --once --require-slots $MATCH_ARGS
+
+      - name: 状態ファイルを保存(変化があったときだけ)
+        if: ${{ !inputs.test_notify }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bluenote_state_*.json
+          if ! git diff --cached --quiet; then
+            git commit -m "状態を更新"
+            git push
+          fi
