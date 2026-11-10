@@ -1,0 +1,28 @@
+{
+ "slots": {
+  "2026 11.23 mon. 1st": {
+   "status": "full",
+   "sig": "050a8b2f4712"
+  },
+  "2026 11.23 mon. 2nd": {
+   "status": "full",
+   "sig": "8746e7876281"
+  },
+  "2026 11.24 tue. 1st": {
+   "status": "full",
+   "sig": "3ca193a5db2a"
+  },
+  "2026 11.24 tue. 2nd": {
+   "status": "full",
+   "sig": "e9258928a44b"
+  },
+  "2026 11.25 wed. 1st": {
+   "status": "full",
+   "sig": "3ca193a5db2a"
+  },
+  "2026 11.25 wed. 2nd": {
+   "status": "full",
+   "sig": "e9258928a44b"
+  }
+ }
+}
