@@ -236,6 +236,9 @@ def check(args, state_path):
                      for k, v in slots.items()}
     state_path.write_text(json.dumps(prev, ensure_ascii=False, indent=1),
                           encoding="utf-8")
+    if args.require_slots and not slots:
+        raise RuntimeError("1st/2nd のカードを読み取れませんでした"
+                           "(ページ構成の変更か、アクセス遮断の可能性)")
 
 
 def main():
@@ -248,6 +251,8 @@ def main():
     ap.add_argument("--once", action="store_true", help="1回だけ確認して終了(cron 用)")
     ap.add_argument("--dump", action="store_true",
                     help="取得した HTML を保存し、各枠の判定材料も表示")
+    ap.add_argument("--require-slots", action="store_true",
+                    help="カードを1件も読み取れなければ失敗扱いにする(GitHub Actions 用)")
     ap.add_argument("--test-notify", action="store_true", help="通知のテスト送信")
     args = ap.parse_args()
 
@@ -265,6 +270,8 @@ def main():
         except Exception as e:                      # 一時的な失敗では止めない
             print(f"[{datetime.now():%m/%d %H:%M:%S}] 取得失敗: {e}",
                   file=sys.stderr, flush=True)
+            if args.once:
+                sys.exit(1)             # cron / GitHub Actions に失敗を伝える
         if args.once:
             break
         time.sleep(interval * random.uniform(0.9, 1.1))
